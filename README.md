@@ -210,8 +210,25 @@ Task: Display the Pokemon’s picture directly in their search result.
 
 We are again in the Web-Scraping JSON file. There we ass the pokemonimage entry into the same metadata onject as pokemontype and pokemongeneration. 
 
+## Intermediate 
+
+### Host code on Github & host search app
+
+We host the Pokémon search app as a static site on GitHub Pages, which serves the committed index.html directly from the repository with no separate build or server step required. The Coveo Search API key embedded in index.html uses the Anonymous Search template, which Coveo explicitly designates as safe for public client-side use. Its only privilege is EXECUTE_QUERY (running searches) plus analytics write access — it cannot modify, delete, or administer any content, source, or configuration in the organization. Because the key can only do what any anonymous visitor to the public search page is already allowed to do, committing it to a public GitHub repository introduces no meaningful security risk. This is the standard pattern Coveo recommends for any Atomic search page that runs entirely in the browser without a backend.
+
+## Advanced
+
+### Deploy Coveo RGA 
+
+Task: Deploy Coveo RGA to get a generative experience
+
+- Learn from, Sources: Pokemon DB (WEB2)
+- leave filter empty, since the source only contains indexed Pokémon pages
+
+
+
 ## Backlog 
 - "List of Pokémon (sprites gallery)" https://pokemondb.net/pokedex/national is still on the list
 - Facet Filter "Type" returns 110 Flying Types, while officially there are 134
 - Missing image on Iron Boulder: likely explains itself — recall ~10% of pages were missing this field back when we checked the metadata sample, and Iron Boulder (a "Paradox" Pokémon, which sometimes has a slightly different page layout) may be one of them. Rather than debug every edge case, Atomic actually has a documented fallback attribute for exactly this — it's even the thing that console warning has been suggesting this whole time. Let's use it instead of chasing 100% coverage.
-- 
+- add API web-crawler component (plus customer story)
