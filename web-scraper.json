@@ -1,0 +1,144 @@
+[
+  {
+    "name": "[Default Coveo web scraping configuration]",
+    "exclude": [
+      {
+        "type": "CSS",
+        "path": "script"
+      },
+      {
+        "type": "CSS",
+        "path": "noscript"
+      },
+      {
+        "type": "CSS",
+        "path": "iframe"
+      },
+      {
+        "type": "CSS",
+        "path": "menu"
+      },
+      {
+        "type": "CSS",
+        "path": "nav"
+      },
+      {
+        "type": "CSS",
+        "path": "header"
+      },
+      {
+        "type": "CSS",
+        "path": "footer"
+      },
+      {
+        "type": "CSS",
+        "path": "video"
+      },
+      {
+        "type": "CSS",
+        "path": "audio"
+      },
+      {
+        "type": "CSS",
+        "path": ".menu"
+      },
+      {
+        "type": "CSS",
+        "path": ".nav"
+      },
+      {
+        "type": "CSS",
+        "path": ".navigation"
+      },
+      {
+        "type": "CSS",
+        "path": ".navbar"
+      },
+      {
+        "type": "CSS",
+        "path": ".nav-bar"
+      },
+      {
+        "type": "CSS",
+        "path": ".head"
+      },
+      {
+        "type": "CSS",
+        "path": ".header"
+      },
+      {
+        "type": "CSS",
+        "path": ".foot"
+      },
+      {
+        "type": "CSS",
+        "path": ".footer"
+      },
+      {
+        "type": "CSS",
+        "path": ".sidebar"
+      },
+      {
+        "type": "CSS",
+        "path": ".sidenav"
+      },
+      {
+        "type": "CSS",
+        "path": ".banner"
+      },
+      {
+        "type": "CSS",
+        "path": ".ad"
+      },
+      {
+        "type": "CSS",
+        "path": ".advert"
+      },
+      {
+        "type": "CSS",
+        "path": ".advertisement"
+      },
+      {
+        "type": "CSS",
+        "path": ".adsbygoogle"
+      },
+      {
+        "type": "CSS",
+        "path": ".popup"
+      },
+      {
+        "type": "CSS",
+        "path": ".modal"
+      }
+    ],
+    "for": {
+      "urls": [
+        ".*"
+      ]
+    },
+    "metadata": {}
+  },
+  {
+    "name": "Pokemon type extraction",
+    "for": {
+      "urls": [
+        "^https://pokemondb\\.net/pokedex/(?!national$|shiny$)[\\w-]+/?$"
+      ]
+    },
+    "exclude": [],
+    "metadata": {
+      "pokemontype": {
+        "type": "CSS",
+        "path": ".sv-tabs-panel.active table.vitals-table a.type-icon::text"
+      },
+      "pokemongeneration": {
+        "type": "CSS",
+        "path": "main#main > p abbr[title^=\"Pokémon \"]::text"
+      },
+      "pokemonimage": {
+        "type": "XPATH",
+        "path": "//div[contains(@class,\"sv-tabs-panel\") and contains(@class,\"active\")]//img[contains(@src,\"/artwork/\")]/@src"
+      }
+    }
+  }
+]

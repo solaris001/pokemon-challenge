@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@coveo/atomic": "^3.4.1"
+  }
+}
