@@ -1,0 +1,25 @@
+# --- Local search page with a live Coveo access token ---
+# Only index.html is meant to be tracked/pushed.
+index.local.html
+
+# --- Coveo query export files used for local verification ---
+*.xlsx
+
+# --- Recruiter-provided challenge materials, not project deliverables ---
+task-handout/
+
+# --- macOS junk ---
+.DS_Store
+
+# --- IDE ---
+.idea/
+.vscode/
+
+# --- Node ---
+node_modules/
+npm-debug.log*
+package-lock.json.bak
+
+# --- Env / secrets, in case you switch to an env-var pattern later ---
+.env
+.env.local

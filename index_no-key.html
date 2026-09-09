@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Pokemon Search - Coveo Atomic</title>
+
+  <!-- Atomic library + default theme, loaded via CDN (pinned to a stable minor version) -->
+  <script type="module" src="https://static.cloud.coveo.com/atomic/v3.56/atomic.esm.js"></script>
+  <link rel="stylesheet" href="https://static.cloud.coveo.com/atomic/v3.56/themes/coveo.css" />
+</head>
+<body>
+
+  <atomic-search-interface id="search">
+    <atomic-search-box></atomic-search-box>
+
+    <div style="display:flex; gap:1.5rem; margin-top:1rem;">
+      <aside style="flex:0 0 200px; display:flex; flex-direction:column; gap:1rem;">
+        <atomic-facet field="pokemontype" label="Type"></atomic-facet>
+        <atomic-facet field="pokemongeneration" label="Generation"></atomic-facet>
+      </aside>
+      <main style="flex:1;">
+        <atomic-result-list>
+          <atomic-result-template>
+            <template>
+              <style>
+                .result-row {
+                  display: flex;
+                  align-items: center;
+                  gap: 1rem;
+                }
+                .pokemon-thumb {
+                  width: 113px;
+                  height: 113px;
+                  flex-shrink: 0;
+                  overflow: hidden;
+                  display: block;
+                }
+                .pokemon-thumb atomic-result-image {
+                  display: block;
+                  width: 100%;
+                  height: 100%;
+                }
+                .pokemon-thumb atomic-result-image img,
+                .pokemon-thumb atomic-result-image::part(image) {
+                  width: 100%;
+                  height: 100%;
+                  object-fit: contain;
+                }
+                .result-row atomic-result-link {
+                  flex: 1;
+                  min-width: 0;
+                }
+              </style>
+              <div class="result-row">
+                <div class="pokemon-thumb">
+                  <atomic-result-image
+                    field="pokemonimage"
+                    fallback="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Crect width='64' height='64' fill='%23e0e0e0'/%3E%3C/svg%3E"
+                  ></atomic-result-image>
+                </div>
+                <atomic-result-link></atomic-result-link>
+              </div>
+            </template>
+          </atomic-result-template>
+        </atomic-result-list>
+      </main>
+    </div>
+  </atomic-search-interface>
+
+  <script type="module">
+    (async () => {
+      await customElements.whenDefined('atomic-search-interface');
+      await customElements.whenDefined('atomic-result-list');
+
+      const searchInterface = document.getElementById('search');
+
+      const organizationId = 'laurapokemonchallengemcfix5o4';
+
+      // Never share this key in chat or commit it to a public GitHub repo.
+      const accessToken = 'xxa67e8a07-5435-4d5e-aa0f-100d849c05aa';
+
+      searchInterface.fieldsToInclude = ['pokemonimage', 'pokemontype', 'pokemongeneration'];
+
+      await searchInterface.initialize({
+        accessToken,
+        organizationId,
+      });
+
+      searchInterface.executeFirstSearch();
+    })();
+  </script>
+
+</body>
+</html>
