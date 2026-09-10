@@ -222,9 +222,95 @@ We host the Pokémon search app as a static site on GitHub Pages, which serves t
 
 Task: Deploy Coveo RGA to get a generative experience
 
+#### Configure RGA model on plattform
+
 - Learn from, Sources: Pokemon DB (WEB2)
 - leave filter empty, since the source only contains indexed Pokémon pages
+- associate with query pipeline:
+  - Model: Pokémon RGA Model
+  - Condition: Query, is not empty
+  - Items to consider: 100 
+  - Chunk relevancy threshold: Medium
+  - Rich text formatting in generated answers: On
+  - Thesaurus rules: Off
 
+  
+A **condition** in a Coveo query pipeline is a boolean rule evaluated against each incoming query, determining whether a specific pipeline component — here, our RGA model association — gets applied to that query. We configured `Query is not empty` because it's the condition Coveo requires for any RGA model association: RGA generates its answer from the text of the user's query, so on an empty query (e.g. page load, before the user types anything) there's nothing to embed or retrieve against, and the model should simply stay inactive.
+
+**Items to consider (100)** — RGA retrieval happens in two stages. First, a normal Coveo search runs and returns your top-matching Pokémon pages. "Items to consider" caps how many of those top results get passed into the second stage, where the model pulls out the actual text chunks used to write the answer. 100 is generous headroom for a ~1,028-item index — it just means "look at up to the 100 most relevant Pokémon pages before picking passages." You'd only shrink it if you had a finely-tuned pipeline and wanted to force the model to ignore lower-ranked results.
+
+**Chunk relevancy threshold (Medium)** — once those top items are in play, each text chunk inside them gets scored for semantic similarity to the query. The threshold is how picky the model is about what counts as "relevant enough" to actually use. Too high, and vague or unusual queries won't generate an answer at all (not enough chunks clear the bar). Too low, and it'll happily generate answers from marginally-related text. Medium is the balanced default — fine to leave as-is unless you notice answers failing to generate for queries that clearly should work.
+
+**Rich text formatting (on)** — this just controls whether the generated answer renders with actual formatting (bold, lists, headings, tables) or as flat plain text. Since you're using Atomic (not Headless), it picks this up automatically — no extra config needed on your end for it to render correctly. Leave it on; it's just a nicer-looking answer for the same content.
+
+Thesaurus rules only matter if your pipeline has synonym rules defined — otherwise there's nothing for the toggle to use. Its job is bridging vocabulary gaps, like mapping "flying-type" to "Flying" if users phrase things differently than your indexed content. Since Pokémon names, types, and generations already match how users search, there's no gap to bridge, so it's fine to leave off.
+
+#### Wiring search page with model
+
+Done: #todo add documentation
+
+### Query suggest
+
+Task: Preload a Query Suggest model to get type ahead.
+
+Query suggest is Coveo's autocomplete. It plugs directly into the search box in Atomic (```atomic-search-box-query```).
+Query Suggest learns from usage analytics, real queries people typed and results they clicked. A brand-new model has no 
+history yet, so it would show an empty dropdown. That's exactly why we preload the model with a Default Queries file, 
+which is a CSV list of expected search terms you write yourself (Pokémon names, types, etc.). That way type-ahead works 
+immediately in the demo instead of waiting for organic usage data to build up.
+
+**Why it's worth doing**: it reduces typos and false starts, nudges users toward queries that actually return good results, 
+and it's a small but very visible "polish" moment in a live panel demo exhibiting production-thinking. 
+
+**Business use case**: A software company's customer support portal gets thousands of tickets full of inconsistent, 
+often-misspelled bug descriptions. By preloading their Query Suggest model with a Default Queries file built from the 
+product's real feature names and error codes, agents and customers see accurate suggestions like "certificate expired error" 
+instantly when they start typing. This is applicable well before enough organic click data exists to train the model naturally. 
+That gets people to the right knowledge-base article faster, cutting both average resolution time and the number of tickets 
+that get filed simply because search returned nothing useful.
+
+#### Implementation
+
+We are on the platform in the Admin Console: 
+- Models -> Add model -> Query suggestion
+- Data period: 3 months, Building frequency: Weekly  (default, recommended)
+- No filters applied
+- Name: Pokémon Query Suggest Model
+- Project: pokemon-atomic
+- Model ID: laurapokemonchallengemcfix5o4_querysuggest_2bdd1635_c992_41ee_9036_267279fa0872
+
+Once the model is build, we associate it with a query pipeline: 
+- we pick default Pipeline -> Edit component
+- Machine learning tab: click Associate model
+- Model: Pokémon Query Suggest Model
+- No condition set (query suggestions are meant to fire on any partial input, so unlike RGA's mandatory "Query is not empty" condition, there's no equivalent restriction we need here)
+
+While the model is building we are creating two .csv files as query history:
+- pokemon-default-queries.csv: #todo what is this for and how is it used technically
+- pokemon-default-text-queries.csv: #todo what is this for and how is it used technically
+
+And we also create a new API key, because This upload needs a key with the "Machine Learning Model configuration files - Edit" 
+privilege, not the public Anonymous Search key sitting the index.html. This one may not be exposes to client-side; it's 
+only used once from the terminal. We have to build a custom key: 
+- Name: Pokemon Challenge - QS Model Config (Admin, Temp)
+- Privileges: Machine learning: Models: Access Level: Edit
+- IMPORTANT! Must remain private.
+
+For this integration, we need an API call to the platform:
+```
+curl -X PUT \
+  "https://platform.cloud.coveo.com/rest/organizations/laurapokemonchallengemcfix5o4/machinelearning/models/laurapokemonchallengemcfix5o4_querysuggest_2bdd1635_c992_41ee_9036_267279fa0872/configs/DEFAULT_QUERIES?languageCode=en" \
+  -H "Authorization: Bearer PUT_API_KEY_HERE" \
+  -F "configFile=@default-queries.csv" \
+  -i
+  
+# Verify it actually landed, by downloading it back
+curl -X GET \
+  "https://platform.cloud.coveo.com/rest/organizations/laurapokemonchallengemcfix5o4/machinelearning/models/laurapokemonchallengemcfix5o4_querysuggest_2bdd1635_c992_41ee_9036_267279fa0872/configs/DEFAULT_QUERIES?languageCode=en" \
+  -H "Authorization: Bearer PUT_API_KEY_HERE"
+```
+
+#open-todo: Say what you'd say if asked why the demo works despite a brand-new org with zero query history — that's basically the "preload" story you already understand (the Default Queries file substituting for analytics you haven't accumulated yet), and it's a good, honest answer if the panel probes on it.
 
 
 ## Backlog 
@@ -232,3 +318,10 @@ Task: Deploy Coveo RGA to get a generative experience
 - Facet Filter "Type" returns 110 Flying Types, while officially there are 134
 - Missing image on Iron Boulder: likely explains itself — recall ~10% of pages were missing this field back when we checked the metadata sample, and Iron Boulder (a "Paradox" Pokémon, which sometimes has a slightly different page layout) may be one of them. Rather than debug every edge case, Atomic actually has a documented fallback attribute for exactly this — it's even the thing that console warning has been suggesting this whole time. Let's use it instead of chasing 100% coverage.
 - add API web-crawler component (plus customer story)
+- man sollte die Liste scrollen können. Aktuell sieht man nur die obersten 10 Elemente
+- filter debugging: it shows several pokémon, when all types are chosen - it should show none
+- Image fallback on atomic-result-image for Iron Boulder — quick attribute add.
+- /pokedex/national exclusion — needs a rescan to confirm your ExpandBeforeFiltering fix actually took.
+- (possibly redundant to a previous backlog element) Flying-type facet undercount (110 vs 134) — worth digging into since it's an Essential-scope accuracy bug the panel could plausibly poke at.
+- understand system architecture and technology behing RGA model
+- when everything is finished / for presentation: system diagram / design 
