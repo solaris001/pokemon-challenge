@@ -1,8 +1,16 @@
-# README Cove Pokemon  Challenge Laura's Solution
+# README Coveo Pokémon  Challenge Laura's Solution
+
+While ticking of the boxes on the *Pokémon Challenge (Pre-Sales) - 2026 Handout*, I am documenting the implementation steps,
+and technical decisions alongside the analogy of the Pokémon Challenge to real world business cases. Since I work agentically
+with the Claude app and Claude Code, it is important to document each technical decision critically and understanding the overall design. 
 
 ## Set-Up 
 
-I am on a Macbook and therefore use Homebre for (most) installtions: 
+I am on a Macbook and therefore use Homebre for installing node. The first two steps from the essential section of the technical
+challenge are already done after this section. Once the invitation to the Coveo clourd organization ist done, we can install the
+coveo CLI and Atomic: 
+
+**Organization Name:** ```laurapokemonchallengemcfix5o4```
 
 ```bash
 # Brew handles Node + npm
@@ -17,9 +25,13 @@ npm install @coveo/atomic
 # Cleanup: brew uninstall node
 ```
 
-## Technical Decisions & Techical Brainstorming
+## Technical Challenge Implementation - ESSENTIAL
 
-### API Push vs. Web Crawler
+### Index / Crawl pokemondb.net
+
+Task: Index (A.K.A Crawl) pokemondb.net using your Cloud Platform Organization.
+
+#### Brainstorming: API Push vs. Web Crawler
 
 Crawling the Pokemon database can be done via a web-crawler or through API push. For the technical challenge I will execute both approaches and compare briefly. A short summary on which approach to use when, will be added to the presentation.
 
@@ -39,7 +51,7 @@ How to structure this approach:
 
 Possible phrasing for presentation: "Here's the Web Crawler handling 1000+ Pokemon at scale. I also demonstrated the Push API by manually indexing a subset—useful when you need real-time updates or control over specific records."
 
-#### How both components fit into the overall system
+##### How both components fit into the overall system
 
 The two sources don't interact with each other at all during ingestion. They're independent, parallel pipelines that happen to feed the same Coveo index:
 - Web Crawler → crawls pokemondb.net on its own schedule → indexes ~1028 items
@@ -312,6 +324,23 @@ curl -X GET \
 
 #open-todo: Say what you'd say if asked why the demo works despite a brand-new org with zero query history — that's basically the "preload" story you already understand (the Default Queries file substituting for analytics you haven't accumulated yet), and it's a good, honest answer if the panel probes on it.
 
+### Pokémon Detail Page
+
+Task: Add a Pokemon Detail Page to show the details of a single pokemon.
+
+**Business case analogy**: A job search site, like Indeed. Indeed doesn't write job postings itself, it crawls them from 
+thousands of different company career pages. Right now, without a detail page, clicking a job in Indeed's search results
+would just send you off to that company's own website (different layout every time, sometimes broken, sometimes ugly). 
+Indeed instead built its own detail page: same data, but styled consistently, kept inside Indeed, with an "Apply" button
+Indeed controls.
+
+#### Implementation
+clickableuri: https://pokemondb.net/pokedex/moltres
+
+- create new html page: pokemon.html
+- use Headless for that (#todo: why)
+- use this command for testing, if the single pokemon detail page exists: ``localhost:3000/pokemon?name=moltres`` (you can use any other pokemon here as well)
+
 
 ## Backlog 
 - "List of Pokémon (sprites gallery)" https://pokemondb.net/pokedex/national is still on the list
@@ -325,3 +354,4 @@ curl -X GET \
 - (possibly redundant to a previous backlog element) Flying-type facet undercount (110 vs 134) — worth digging into since it's an Essential-scope accuracy bug the panel could plausibly poke at.
 - understand system architecture and technology behing RGA model
 - when everything is finished / for presentation: system diagram / design 
+- Single Pokemon Page: 

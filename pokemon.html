@@ -97,7 +97,6 @@
   <script type="module">
     import {
       buildSearchEngine,
-      getOrganizationEndpoints,
       buildResultList,
       loadAdvancedSearchQueryActions,
     } from 'https://static.cloud.coveo.com/headless/v3/headless.esm.js';
@@ -111,28 +110,26 @@
     const statusEl = document.getElementById('status');
     const cardEl = document.getElementById('pokemon-card');
 
-    const slug = new URLSearchParams(window.location.search).get('name');
+    const targetUri = new URLSearchParams(window.location.search).get('uri');
 
-    if (!slug) {
+    if (!targetUri) {
       showError('No Pokémon specified. Go back and pick one from the search results.');
     } else {
-      lookupPokemon(slug);
+      lookupPokemon(targetUri);
     }
 
-    async function lookupPokemon(slug) {
+    function lookupPokemon(targetUri) {
       const engine = buildSearchEngine({
         configuration: {
           organizationId,
           accessToken,
-          organizationEndpoints: getOrganizationEndpoints(organizationId),
           search: { searchHub: 'PokemonChallengeDetail' },
         },
       });
 
       // The detail page has no search box, facets, or generative answer —
-      // it looks up exactly one document by its crawled URL.
-      const targetUri = `https://pokemondb.net/pokedex/${slug}`;
-
+      // it looks up exactly one document by its crawled URL, passed straight
+      // through from atomic-result-link's href-template (no reconstruction).
       engine.dispatch(
         loadAdvancedSearchQueryActions(engine).updateAdvancedSearchQueries({
           cq: `@clickableuri=="${targetUri}"`,
@@ -145,28 +142,43 @@
         },
       });
 
+      resultList.subscribe(() => {
+        const state = resultList.state;
+
+        // Fires on every state change; ignore updates until the first
+        // search has actually finished.
+        if (!state.firstSearchExecuted || state.isLoading) {
+          return;
+        }
+
+        if (state.hasError) {
+          showError('Something went wrong while looking up this Pokémon.');
+          return;
+        }
+
+        if (!state.results.length) {
+          showError(`No Pokémon found for "${targetUri}".`);
+          return;
+        }
+
+        renderPokemon(state.results[0]);
+      });
+
       engine.executeFirstSearch();
-      await engine.waitForSearchCompletedAction();
-
-      const { results } = resultList.state;
-
-      if (!results.length) {
-        showError(`No Pokémon found for "${slug}".`);
-        return;
-      }
-
-      renderPokemon(results[0]);
     }
 
     function renderPokemon(result) {
       statusEl.hidden = true;
       cardEl.hidden = false;
 
-      document.getElementById('pokemon-name').textContent = result.title;
+      // pokemondb.net titles all follow "<Name> Pokédex: stats, moves,
+      // evolution & locations | Pokémon Database" — keep just the name.
+      const displayName = result.title.split(' Pokédex:')[0];
+      document.getElementById('pokemon-name').textContent = displayName;
 
       const img = document.getElementById('pokemon-image');
       img.src = result.raw.pokemonimage || '';
-      img.alt = result.title;
+      img.alt = displayName;
 
       const typeValue = result.raw.pokemontype;
       document.getElementById('pokemon-type').textContent = Array.isArray(typeValue)
