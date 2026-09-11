@@ -1,7 +1,3 @@
-# --- Local search page with a live Coveo access token ---
-# Only index.html is meant to be tracked/pushed.
-index.local.html
-
 # --- Coveo query export files used for local verification ---
 *.xlsx
 
