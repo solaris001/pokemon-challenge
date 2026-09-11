@@ -17,9 +17,9 @@
     <atomic-generated-answer></atomic-generated-answer>
 
     <div style="display:flex; gap:1.5rem; margin-top:1rem;">
-      <aside style="flex:0 0 200px; display:flex; flex-direction:column; gap:1rem;">
-        <atomic-facet field="pokemontype" label="Type"></atomic-facet>
-        <atomic-facet field="pokemongeneration" label="Generation"></atomic-facet>
+      <aside style="flex:0 0 200px; display:flex; flex-direction:column; gap:1rem; overflow-y: auto;">
+        <atomic-facet field="pokemontype" label="Type" number-of-values="1000"></atomic-facet>
+        <atomic-facet field="pokemongeneration" label="Generation" number-of-values="1000"></atomic-facet>
       </aside>
       <main style="flex:1;">
         <atomic-result-list>
@@ -66,6 +66,7 @@
             </template>
           </atomic-result-template>
         </atomic-result-list>
+        <atomic-pager></atomic-pager>
       </main>
     </div>
   </atomic-search-interface>

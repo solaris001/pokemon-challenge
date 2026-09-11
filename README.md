@@ -1,6 +1,6 @@
 # README Coveo Pokémon  Challenge Laura's Solution
 
-While ticking of the boxes on the *Pokémon Challenge (Pre-Sales) - 2026 Handout*, I am documenting the implementation steps,
+While ticking of the boxes on the *Pokémon Challenge (Pre-Sales) - 2026* Handout, I am documenting the implementation steps,
 and technical decisions alongside the analogy of the Pokémon Challenge to real world business cases. Since I work agentically
 with the Claude app and Claude Code, it is important to document each technical decision critically and understanding the overall design. 
 
@@ -209,7 +209,10 @@ we get the types for both Pokémon back (e.g. Moltres: Fire, Flying AND Galarian
 that we change the path ```.sv-tabs-panel.active table.vitals-table a.type-icon::text```. That way the type is only returned
 for the active Pokémon tab, the displayed Pokémon data of the normal Pokémon - not the one in the second tab. 
 
-As last step we add the facet to ```index.html```. That way we 
+Here's a 5-sentence version for your documentation:
+
+The Type facet uses Coveo's default `resultsMustMatch: atLeastOneValue` behavior: selecting multiple values (e.g., Dark and Ghost) returns Pokémon matching *any* selected type, not all of them. We kept this default deliberately, even though Type is unusual among our facets in being multi-valued, because it preserves the checkbox-filter mental model users already bring from virtually every e-commerce and enterprise search UI — more selections broaden results, they don't narrow them. We considered switching to an "all values must match" mode to support exact dual-type lookups (e.g., "show me Dark/Ghost types"), which is a real and common query in the Pokémon domain specifically. We rejected it as the default, since it inverts the standard convention and effectively caps out at two selections before guaranteeing zero results — a behavior most users wouldn't expect from a checkbox filter without explicit UI signaling. A dedicated dual-type search remains a viable enhancement, but as an explicitly separate, opt-in mode rather than a change to default facet semantics.
+
 ### Generation facet filter
 
 Task: Create a facet to filter search results by Pokemon Generation.
@@ -346,13 +349,10 @@ clickableuri: https://pokemondb.net/pokedex/moltres
 ## Backlog 
 - "List of Pokémon (sprites gallery)" https://pokemondb.net/pokedex/national is still on the list
 - Facet Filter "Type" returns 110 Flying Types, while officially there are 134
-- Missing image on Iron Boulder: likely explains itself — recall ~10% of pages were missing this field back when we checked the metadata sample, and Iron Boulder (a "Paradox" Pokémon, which sometimes has a slightly different page layout) may be one of them. Rather than debug every edge case, Atomic actually has a documented fallback attribute for exactly this — it's even the thing that console warning has been suggesting this whole time. Let's use it instead of chasing 100% coverage.
 - add API web-crawler component (plus customer story)
 - man sollte die Liste scrollen können. Aktuell sieht man nur die obersten 10 Elemente
-- filter debugging: it shows several pokémon, when all types are chosen - it should show none
 - Image fallback on atomic-result-image for Iron Boulder — quick attribute add.
 - /pokedex/national exclusion — needs a rescan to confirm your ExpandBeforeFiltering fix actually took.
-- (possibly redundant to a previous backlog element) Flying-type facet undercount (110 vs 134) — worth digging into since it's an Essential-scope accuracy bug the panel could plausibly poke at.
 - understand system architecture and technology behing RGA model
-- when everything is finished / for presentation: system diagram / design 
-- Single Pokemon Page: 
+- when everything is finished / for presentation: system diagram / design
+- "List of Pokemon (sprites gallery) still on webpage"
