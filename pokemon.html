@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Pokémon Detail - Coveo Headless</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      max-width: 640px;
+      margin: 3rem auto;
+      padding: 0 1.5rem;
+      color: #1a1a1a;
+    }
+
+    .back-link {
+      display: inline-block;
+      margin-bottom: 1.5rem;
+      text-decoration: none;
+      color: #333;
+      font-size: 0.9rem;
+    }
+
+    #status {
+      font-size: 1rem;
+      color: #555;
+    }
+
+    #pokemon-card {
+      display: flex;
+      gap: 1.5rem;
+      align-items: flex-start;
+    }
+
+    .pokemon-thumb {
+      width: 240px;
+      height: 240px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f2f2f2;
+      overflow: hidden;
+    }
+
+    .pokemon-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    #pokemon-name {
+      margin: 0 0 1rem;
+      font-size: 1.75rem;
+    }
+
+    .field-row {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+      font-size: 0.95rem;
+    }
+
+    .field-label {
+      font-weight: 600;
+      width: 6rem;
+      flex-shrink: 0;
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+
+  <a class="back-link" href="index.html">&larr; Back to search</a>
+
+  <p id="status">Loading…</p>
+
+  <div id="pokemon-card" hidden>
+    <div class="pokemon-thumb">
+      <img id="pokemon-image" alt="" />
+    </div>
+    <div>
+      <h1 id="pokemon-name"></h1>
+      <div class="field-row">
+        <span class="field-label">Type</span>
+        <span id="pokemon-type"></span>
+      </div>
+      <div class="field-row">
+        <span class="field-label">Generation</span>
+        <span id="pokemon-generation"></span>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import {
+      buildSearchEngine,
+      getOrganizationEndpoints,
+      buildResultList,
+      loadAdvancedSearchQueryActions,
+    } from 'https://static.cloud.coveo.com/headless/v3/headless.esm.js';
+
+    const organizationId = 'laurapokemonchallengemcfix5o4';
+
+    // Same Anonymous Search key used on index.html — read-only, meant to be public.
+    // Never share this key in chat or commit it to a public GitHub repo.
+    const accessToken = 'xxa67e8a07-5435-4d5e-aa0f-100d849c05aa';
+
+    const statusEl = document.getElementById('status');
+    const cardEl = document.getElementById('pokemon-card');
+
+    const slug = new URLSearchParams(window.location.search).get('name');
+
+    if (!slug) {
+      showError('No Pokémon specified. Go back and pick one from the search results.');
+    } else {
+      lookupPokemon(slug);
+    }
+
+    async function lookupPokemon(slug) {
+      const engine = buildSearchEngine({
+        configuration: {
+          organizationId,
+          accessToken,
+          organizationEndpoints: getOrganizationEndpoints(organizationId),
+          search: { searchHub: 'PokemonChallengeDetail' },
+        },
+      });
+
+      // The detail page has no search box, facets, or generative answer —
+      // it looks up exactly one document by its crawled URL.
+      const targetUri = `https://pokemondb.net/pokedex/${slug}`;
+
+      engine.dispatch(
+        loadAdvancedSearchQueryActions(engine).updateAdvancedSearchQueries({
+          cq: `@clickableuri=="${targetUri}"`,
+        })
+      );
+
+      const resultList = buildResultList(engine, {
+        options: {
+          fieldsToInclude: ['pokemonimage', 'pokemontype', 'pokemongeneration'],
+        },
+      });
+
+      engine.executeFirstSearch();
+      await engine.waitForSearchCompletedAction();
+
+      const { results } = resultList.state;
+
+      if (!results.length) {
+        showError(`No Pokémon found for "${slug}".`);
+        return;
+      }
+
+      renderPokemon(results[0]);
+    }
+
+    function renderPokemon(result) {
+      statusEl.hidden = true;
+      cardEl.hidden = false;
+
+      document.getElementById('pokemon-name').textContent = result.title;
+
+      const img = document.getElementById('pokemon-image');
+      img.src = result.raw.pokemonimage || '';
+      img.alt = result.title;
+
+      const typeValue = result.raw.pokemontype;
+      document.getElementById('pokemon-type').textContent = Array.isArray(typeValue)
+        ? typeValue.join(' / ')
+        : (typeValue || '—');
+
+      document.getElementById('pokemon-generation').textContent =
+        result.raw.pokemongeneration || '—';
+    }
+
+    function showError(message) {
+      statusEl.hidden = false;
+      statusEl.textContent = message;
+      cardEl.hidden = true;
+    }
+  </script>
+
+</body>
+</html>
