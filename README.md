@@ -227,6 +227,7 @@ We are again in the Web-Scraping JSON file. There we ass the pokemonimage entry 
 ### Host code on Github & host search app
 
 We host the Pokémon search app as a static site on GitHub Pages, which serves the committed index.html directly from the repository with no separate build or server step required. The Coveo Search API key embedded in index.html uses the Anonymous Search template, which Coveo explicitly designates as safe for public client-side use. Its only privilege is EXECUTE_QUERY (running searches) plus analytics write access — it cannot modify, delete, or administer any content, source, or configuration in the organization. Because the key can only do what any anonymous visitor to the public search page is already allowed to do, committing it to a public GitHub repository introduces no meaningful security risk. This is the standard pattern Coveo recommends for any Atomic search page that runs entirely in the browser without a backend.
+The Pokémon seach page is hosted as github page here: https://solaris001.github.io/pokemon-challenge/
 
 ## Advanced
 
