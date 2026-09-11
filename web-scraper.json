@@ -132,8 +132,8 @@
         "path": ".sv-tabs-panel.active table.vitals-table a.type-icon::text"
       },
       "pokemongeneration": {
-        "type": "CSS",
-        "path": "main#main > p abbr[title^=\"Pokémon \"]::text"
+        "type": "XPATH",
+        "path": "//p[contains(., \"introduced in\")]//abbr[starts-with(@title, \"Pokémon \")]/text()"
       },
       "pokemonimage": {
         "type": "XPATH",
