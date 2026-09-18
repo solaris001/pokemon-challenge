@@ -2,7 +2,7 @@
 *.xlsx
 
 # --- Recruiter-provided challenge materials, not project deliverables ---
-task-handout/
+technical-challenge-presentation/
 
 # --- macOS junk ---
 .DS_Store

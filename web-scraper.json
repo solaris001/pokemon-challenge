@@ -109,6 +109,10 @@
       {
         "type": "CSS",
         "path": ".modal"
+      },
+      {
+        "type": "CSS",
+        "path": ".panel-nav"
       }
     ],
     "for": {

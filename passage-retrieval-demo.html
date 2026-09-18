@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Pokemon DB — Passage Retrieval demo</title>
+<style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    max-width: 720px;
+    margin: 40px auto;
+    padding: 0 20px;
+    color: #1a1a1a;
+  }
+  h1 { font-size: 1.3rem; margin-bottom: 4px; }
+  p.sub { color: #666; margin-top: 0; font-size: 0.9rem; }
+  .query-row { display: flex; gap: 8px; margin: 20px 0; }
+  input[type="text"] {
+    flex: 1;
+    padding: 10px 12px;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+  }
+  button {
+    padding: 10px 18px;
+    font-size: 1rem;
+    border: none;
+    border-radius: 6px;
+    background: #1a1a1a;
+    color: white;
+    cursor: pointer;
+  }
+  button:disabled { background: #999; cursor: default; }
+  .passage {
+    border: 1px solid #e2e2e2;
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+    display: flex;
+    gap: 12px;
+  }
+  .passage img { width: 56px; height: 56px; object-fit: contain; flex-shrink: 0; }
+  .passage-body { flex: 1; }
+  .passage-text { margin: 0 0 8px 0; line-height: 1.4; }
+  .meta { font-size: 0.8rem; color: #777; display: flex; gap: 10px; flex-wrap: wrap; }
+  .meta a { color: #777; }
+  .score { font-variant-numeric: tabular-nums; }
+  #status { color: #a33; font-size: 0.9rem; min-height: 1.2em; margin-top: 4px; }
+</style>
+</head>
+<body>
+
+<h1>Pokemon DB — Passage Retrieval demo</h1>
+<p class="sub">Calls the Coveo Passage Retrieval API directly (no search UI, no RGA) — ranked, cited passages only.</p>
+
+<div class="query-row">
+  <input type="text" id="query" value="Compare the height and weight of Charizard and Blastoise" />
+  <button id="go">Retrieve passages</button>
+</div>
+<div id="status"></div>
+<div id="results"></div>
+
+<script>
+  // --- Config -----------------------------------------------------------
+  const ORG_ID = "laurapokemonchallengemcfix5o4";
+  const SEARCH_API_KEY = "xxa67e8a07-5435-4d5e-aa0f-100d849c05aa"; // use "Pokemon Challenge - Atomic Search UI" -- NOT the QS Model Config key
+
+  // Reuse the exact platform host your existing index.html resolved to.
+  // Check the Network tab on your working Atomic page (or the value
+  // getOrganizationEndpoints() returned there) -- most orgs are
+  // platform.cloud.coveo.com, but EU/AU orgs need platform-eu / platform-au.
+  const PLATFORM_HOST = "https://platform.cloud.coveo.com";
+
+  // This demo uses a dedicated pipeline (not the one your search page/RGA
+  // uses), so route directly by pipeline name rather than by search hub --
+  // there's no UI or hub condition pointing at this pipeline.
+  // Exact string as created in Admin Console -- must match precisely,
+  // since the API matches by exact name. Confirmed from the Models
+  // page Association column, not from memory.
+  const PIPELINE_NAME = "Pok\u00e9mon DB Retrieval Demo"; // escaped e-acute so encoding issues can't corrupt it
+
+  const MAX_PASSAGES = 5;
+  // ------------------------------------------------------------------------
+
+  const input = document.getElementById("query");
+  const button = document.getElementById("go");
+  const status = document.getElementById("status");
+  const results = document.getElementById("results");
+
+  async function retrievePassages(query) {
+    const url = `${PLATFORM_HOST}/rest/search/v3/passages/retrieve?organizationId=${ORG_ID}`;
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${SEARCH_API_KEY}`,
+      },
+      body: JSON.stringify({
+        query,
+        pipeline: PIPELINE_NAME,
+        maxPassages: MAX_PASSAGES,
+        localization: { locale: "en-US" },
+        additionalFields: ["clickableuri", "pokemonimage", "pokemontype"],
+        analytics: { capture: true },
+      }),
+    });
+
+    if (!response.ok) {
+      const body = await response.text();
+      throw new Error(`${response.status} ${response.statusText} - ${body}`);
+    }
+    return response.json();
+  }
+
+  function renderPassages(data) {
+    results.innerHTML = "";
+    if (!data.items || data.items.length === 0) {
+      results.innerHTML = "<p>No passages returned for this query.</p>";
+      return;
+    }
+    for (const item of data.items) {
+      const doc = item.document || {};
+      const div = document.createElement("div");
+      div.className = "passage";
+      div.innerHTML = `
+        ${doc.pokemonimage ? `<img src="${doc.pokemonimage}" alt="">` : ""}
+        <div class="passage-body">
+          <p class="passage-text">${item.text}</p>
+          <div class="meta">
+            <span class="score">score: ${item.relevanceScore?.toFixed(3) ?? "n/a"}</span>
+            ${doc.title ? `<span>${doc.title}</span>` : ""}
+            ${doc.clickableuri ? `<a href="${doc.clickableuri}" target="_blank">source</a>` : ""}
+          </div>
+        </div>`;
+      results.appendChild(div);
+    }
+  }
+
+  async function runSearch() {
+    const query = input.value.trim();
+    if (!query) return;
+    button.disabled = true;
+    status.textContent = "Retrieving passages...";
+    results.innerHTML = "";
+    try {
+      const data = await retrievePassages(query);
+      status.textContent = `Response ID: ${data.responseId ?? "n/a"} - ${data.items?.length ?? 0} passage(s)`;
+      renderPassages(data);
+    } catch (err) {
+      status.textContent = `Error: ${err.message}`;
+      // A 422 here almost always means the CPR/SE model isn't finished
+      // building yet, or PIPELINE_NAME doesn't exactly match the pipeline
+      // they're associated with -- check Admin Console -> Models before
+      // assuming the code is wrong.
+    } finally {
+      button.disabled = false;
+    }
+  }
+
+  button.addEventListener("click", runSearch);
+  input.addEventListener("keydown", (e) => { if (e.key === "Enter") runSearch(); });
+</script>
+
+</body>
+</html>
